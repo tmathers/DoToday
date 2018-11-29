@@ -1,9 +1,10 @@
 package com.taramathers.dotoday
 
-import android.arch.persistence.room.Dao
-import android.arch.persistence.room.Insert
-import android.arch.persistence.room.OnConflictStrategy.REPLACE
-import android.arch.persistence.room.Query
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy.REPLACE
+import androidx.room.Query
+import androidx.room.Update
 
 @Dao
 interface ItemDataDAO {
@@ -16,4 +17,7 @@ interface ItemDataDAO {
 
     @Query("DELETE from itemData")
     fun deleteAll()
+
+    @Update
+    fun update(item : ItemData)
 }

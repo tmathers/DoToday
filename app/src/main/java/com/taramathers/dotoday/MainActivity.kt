@@ -1,28 +1,29 @@
 package com.taramathers.dotoday
 
 import android.os.Bundle
-import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
+
 
 import kotlinx.android.synthetic.main.activity_main.*
 import android.content.Context.LAYOUT_INFLATER_SERVICE
-import android.support.v4.content.ContextCompat.getSystemService
 import android.content.Context
 import android.os.Handler
-import android.support.v4.content.ContextCompat
+import androidx.core.content.ContextCompat
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.*
 import android.view.inputmethod.EditorInfo
 import android.widget.*
+import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.item_view.*
+import kotlinx.android.synthetic.main.item_view.view.*
 import kotlin.math.roundToInt
 
 /**
  * MainActivity
  */
 class MainActivity : AppCompatActivity() {
-    val listItems: MutableMap<Long, String> = HashMap()
+    val listItems: MutableMap<Int, String> = HashMap()
     var lastId = 0
 
     var percentDone = 0
@@ -47,6 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         mDb = ItemDatabase.getInstance(this)
 
+
         fetchDataFromDb()
 
         fab.setOnClickListener {
@@ -60,8 +62,6 @@ class MainActivity : AppCompatActivity() {
                         LinearLayout.LayoutParams.WRAP_CONTENT)
                 lp.setMargins(8, 8, 8, 8)
                 layoutParams = lp
-                setBackgroundColor(ContextCompat.getColor(this@MainActivity,
-                        android.R.color.holo_blue_light))
                 imeOptions = EditorInfo.IME_ACTION_DONE
                 textSize = 20f
                 inputType = InputType.TYPE_CLASS_TEXT
@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            updatePercentDone()
         }
     }
 
@@ -105,54 +106,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Create a toast
-     */
-    fun Context.toast(context: Context = applicationContext, message: String, duration: Int = Toast.LENGTH_SHORT) {
-        Toast.makeText(context, message, duration).show()
-    }
-
-    /**
-     * TextWatcher
-     */
-    fun EditText.smartTextWatcher(on: (String) -> Unit, after: (String) -> Unit, before: (String) -> Unit) {
-        this.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {
-                after.invoke(s.toString())
-            }
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-                before.invoke(s.toString())
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                on.invoke(s.toString())
-            }
-        })
-    }
-
-    /**
      * Create a new checkbox item
      *
      * @param itemText Checkbox item text
      */
-    fun createItem(item: ItemData) {
+    private fun createItem(item: ItemData) {
         println("done_")
 
 
-        listItems.put(item.id!!, item.text)
-        print(listItems)
+        listItems.put(item.id!!.toInt(), item.text)
+        println(listItems)
 
-        var checkBox:CheckBox = CheckBox(this)
-        checkBox.setText(item.text)
-        checkBox.setTextSize(20f)
-        checkBox.isChecked = item.checked
+       // var checkBox:CheckBox = CheckBox(this)
+       // checkBox.setText(item.text)
+       // checkBox.setTextSize(20f)
+        //checkBox.isChecked = item.checked
 
-        //val linearLayout = findViewById(R.id.mainLayout) as LinearLayout
-        itemLayout.addView(checkBox)
+        //val itemView = findViewById(R.id.itemView) as LinearLayout?
+        val inflater:LayoutInflater = LayoutInflater.from(applicationContext)
 
-        checkBox.setOnClickListener( View.OnClickListener {
+        val itemView: View = inflater.inflate(R.layout.item_view, mainLayout, false)
+        itemView!!.checkBox.text = item.text
+        itemView!!.checkBox.isChecked = item.checked
+        itemView.id = item.id!!.toInt()
+        itemLayout.addView(itemView)
+
+
+        itemView.checkBox.setOnClickListener( View.OnClickListener {
             updatePercentDone()
+            var item =  ItemData(
+                    itemView.id.toLong(),
+                    itemView.checkBox.text.toString(),
+                    itemView.checkBox.isChecked)
+            updateItem(item);
         })
+
+        updatePercentDone()
     }
 
     /**
@@ -165,18 +154,15 @@ class MainActivity : AppCompatActivity() {
         var numChecked : Float = 0f
         val childCount = itemLayout.childCount
 
-        println("CHILDREN " + childCount.toString())
         for (i in 0 until childCount) {
             val view = itemLayout.getChildAt(i)
-            if (view is CheckBox) {
-                val checkBox = view as CheckBox
-                if (checkBox.isChecked) {
-                    numChecked++
-                }
+            val checkBox = view.checkBox as CheckBox
+            if (checkBox.isChecked) {
+                numChecked++
             }
         }
 
-        print( numChecked.toString() + " / " + listItems.size.toString())
+        //print( numChecked.toString() + " / " + listItems.size.toString())
         var percent : Float = numChecked / listItems.size.toFloat()
         percent *= 100
         var percentInt = percent.roundToInt()
@@ -196,8 +182,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchDataFromDb() {
         val task = Runnable {
-            val items =
-                    mDb?.itemDataDao()?.getAll()
+
+            val items = mDb?.itemDataDao()?.getAll()
             mUiHandler.post({
                 if (items == null || items?.size == 0) {
                     println("No data in cache..!!")
@@ -211,14 +197,18 @@ class MainActivity : AppCompatActivity() {
         mDbWorkerThread.postTask(task)
     }
 
-    private fun insertToDb(itemData: ItemData) : Long? {
-        var id : Long? = 0
+    private fun insertToDb(itemData: ItemData) : Int? {
+
+        println("Inserting ${itemData.text}")
+
+        var id: Long? = 0
         val task = Runnable {
-            id = mDb?.itemDataDao()?.insert(itemData)
+             id = mDb?.itemDataDao()?.insert(itemData)
+            //println("inserted $id")
         }
         mDbWorkerThread.postTask(task)
 
-        return id
+        return id!!.toInt()
     }
 
     override fun onDestroy() {
@@ -232,16 +222,24 @@ class MainActivity : AppCompatActivity() {
 
         mainLayout.removeView(editText)
 
-        var itemData = ItemData(null, text, false)
+        var itemData = ItemData()
+        itemData.text = text
+        itemData.checked = false
         val id = insertToDb(itemData)
-        itemData.id = id
+        itemData.id = id!!.toLong()
 
         createItem(itemData)
 
-        editText.setId(id?.toInt()!!)
+        editText.setId(id!!)
 
         updatePercentDone()
     }
 
+    fun updateItem(item: ItemData) {
+        val task = Runnable {
+            val items = mDb?.itemDataDao()?.update(item)
+        }
+        mDbWorkerThread.postTask(task)
+    }
 
 }

@@ -7,19 +7,20 @@
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="10dp"
+    android:layout_margin="@dimen/main_margin"
     android:orientation="vertical"
-    tools:context=".MainActivity">
-
+    tools:context=".MainActivity"
+    android:theme="@style/Theme.AppCompat">
 
     <TextView
         android:id="@+id/totalText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="You have no items to do today."
-        android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+        android:textSize="@dimen/text_size"
+        />
 
-    <android.support.design.widget.FloatingActionButton
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -28,20 +29,6 @@
         app:backgroundTint="?attr/colorPrimary"
         app:elevation="0dp"
         app:srcCompat="@android:drawable/ic_menu_add" />
-
-    <!--  <android.support.design.widget.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay" />
-
-    </android.support.design.widget.AppBarLayout>-->
 
     <LinearLayout
 
